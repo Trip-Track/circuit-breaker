@@ -2,10 +2,12 @@ package swa
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
+import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import swa.circuit_breaker.CircuitBreaker
 import swa.circuit_breaker.CircuitBreakerReject
+
 
 fun Application.configureRouting() {
 
@@ -15,17 +17,17 @@ fun Application.configureRouting() {
 
     routing {
         get("/weather") {
-            val city = call.request.queryParameters["city"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "city required")
 
             try {
-                circuitBreaker.routeRequest(city)
+                circuitBreaker.routeRequest(call.request.path(), call.request.queryParameters)
                 call.respond("")
             } catch (_: CircuitBreakerReject) {
                 call.respond(HttpStatusCode.ServiceUnavailable,
-                    "Weather temporarily unavailable (circuit open)")
+                    "Weather temporarily unavailable")
             } catch (ex: Exception) {
-                call.respond(HttpStatusCode.BadGateway, ex.localizedMessage)
+                println(ex.message)
+                println(ex)
+                call.respond(HttpStatusCode.BadGateway)
             }
         }
     }
