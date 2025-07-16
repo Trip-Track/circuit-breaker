@@ -1,34 +1,40 @@
 package swa
 
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.copyTo
+import io.ktor.utils.io.jvm.javaio.copyTo
+import swa.UrlResolver.discoverService
 import swa.circuit_breaker.CircuitBreaker
 import swa.circuit_breaker.CircuitBreakerReject
 
 
 
-fun Application.configureRouting() {
-
-    val tripPlannerCB = CircuitBreaker(
-        baseUrl = System.getenv("TRIP_PLANNER_URL") ?: "http://trip-planner:8000"
-    )
-    val cityInfoCB = CircuitBreaker(
-        baseUrl = System.getenv("CITY_INFO_URL") ?: "http://city-info:8000"
-    )
+fun Application.configureRouting(
+    tripPlannerCB: CircuitBreaker,
+    cityInfoCB: CircuitBreaker
+) {
 
     routing {
 
         route("/trip") {
             get {
                 try {
-                    tripPlannerCB.routeRequest(call.request.path(), call.request.queryParameters)
-                    call.respond("")                    // body already streamed back
+                    val rsp = tripPlannerCB.routeRequest(
+                        call.request.path(),
+                        call.request.queryParameters
+                    )
+                    call.respondProxy(rsp)
+
                 } catch (_: CircuitBreakerReject) {
                     call.respond(HttpStatusCode.ServiceUnavailable,
-                        "Trip-planner temporarily unavailable")
+                        "Path temporarily unavailable")
                 } catch (ex: Exception) {
                     ex.printStackTrace()
                     call.respond(HttpStatusCode.BadGateway)
@@ -38,11 +44,15 @@ fun Application.configureRouting() {
 
         get("/map") {
             try {
-                tripPlannerCB.routeRequest(call.request.path(), call.request.queryParameters)
-                call.respond("")
+                val rsp = tripPlannerCB.routeRequest(
+                    call.request.path(),
+                    call.request.queryParameters
+                )
+                call.respondProxy(rsp)
+
             } catch (_: CircuitBreakerReject) {
                 call.respond(HttpStatusCode.ServiceUnavailable,
-                    "Trip-planner temporarily unavailable")
+                    "Map temporarily unavailable")
             } catch (ex: Exception) {
                 ex.printStackTrace()
                 call.respond(HttpStatusCode.BadGateway)
@@ -52,8 +62,11 @@ fun Application.configureRouting() {
         route("/city/{city}/{endpoint}") {
             get {
                 try {
-                    cityInfoCB.routeRequest(call.request.path(), call.request.queryParameters)
-                    call.respond("")
+                    val rsp = cityInfoCB.routeRequest(
+                        call.request.path(),
+                        call.request.queryParameters
+                    )
+                    call.respondProxy(rsp)
                 } catch (_: CircuitBreakerReject) {
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "City-info temporarily unavailable")
@@ -63,5 +76,17 @@ fun Application.configureRouting() {
                 }
             }
         }
+    }
+}
+
+suspend fun ApplicationCall.respondProxy(rsp: HttpResponse) {
+    response.status(rsp.status)
+
+    rsp.headers[HttpHeaders.ContentType]?.let { ct ->
+        response.headers.append(HttpHeaders.ContentType, ct)
+    }
+
+    respondOutputStream {
+        rsp.bodyAsChannel().copyTo(this)
     }
 }
