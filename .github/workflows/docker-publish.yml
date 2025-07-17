@@ -3,7 +3,7 @@ name: Build & Push to Docker Hub
 on:
 
   push:
-    branches: [ dev ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/trip-planner
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/cicuit-breaker
 
       - uses: docker/build-push-action@v5
         with:
