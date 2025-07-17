@@ -9,10 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (incl. submodules)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
+          token: '${{ secrets.GH_PAT }}'
           fetch-depth: 0
 
       - name: Set up JDK 21
