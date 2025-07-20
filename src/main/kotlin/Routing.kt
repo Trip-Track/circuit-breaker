@@ -33,7 +33,6 @@ fun Application.configureRouting(
                     call.respondProxy(rsp)
 
                 } catch (_: CircuitBreakerReject) {
-                    log.warn("Circuit breaker failed to route request to ${call.request.path()}")
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "Path temporarily unavailable")
                 } catch (ex: Exception) {
@@ -53,7 +52,6 @@ fun Application.configureRouting(
                 call.respondProxy(rsp)
 
             } catch (_: CircuitBreakerReject) {
-                log.warn("Circuit breaker failed to route request to ${call.request.path()}")
                 call.respond(HttpStatusCode.ServiceUnavailable,
                     "Map temporarily unavailable")
             } catch (ex: Exception) {
@@ -72,7 +70,6 @@ fun Application.configureRouting(
                     )
                     call.respondProxy(rsp)
                 } catch (_: CircuitBreakerReject) {
-                    log.warn("Circuit breaker failed to route request to ${call.request.path()}")
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "City-info temporarily unavailable")
                 } catch (ex: Exception) {

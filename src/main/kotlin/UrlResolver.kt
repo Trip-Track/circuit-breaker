@@ -5,8 +5,10 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 import swa.circuit_breaker.Logger
 
 
@@ -22,6 +24,7 @@ object UrlResolver {
 
         return try {
             val body: String = client.get("$consulAddr/v1/catalog/service/$name") {
+                println(url)
                 timeout { requestTimeoutMillis = 1_000 }
             }.body()
 
@@ -42,11 +45,11 @@ object UrlResolver {
         } catch (e: Exception) {
             logger.log.error("Failed to discover service: $name: ${e.message}")
             null
-        } finally {
-            client.close()
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
+    @JsonIgnoreUnknownKeys
     @Serializable
     private data class ConsulCatalogService(
         val ServiceAddress: String = "",
