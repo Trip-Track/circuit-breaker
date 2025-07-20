@@ -37,6 +37,7 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "Path temporarily unavailable")
                 } catch (ex: Exception) {
+                    log.error("Exception while routing request to ${call.request.path()}")
                     ex.printStackTrace()
                     call.respond(HttpStatusCode.BadGateway)
                 }
@@ -56,6 +57,7 @@ fun Application.configureRouting(
                 call.respond(HttpStatusCode.ServiceUnavailable,
                     "Map temporarily unavailable")
             } catch (ex: Exception) {
+                log.error("Exception while routing request to ${call.request.path()}")
                 ex.printStackTrace()
                 call.respond(HttpStatusCode.BadGateway)
             }
@@ -74,7 +76,8 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "City-info temporarily unavailable")
                 } catch (ex: Exception) {
-                    log.error(ex.message)
+                    log.error("Exception while routing request to ${call.request.path()}")
+                    ex.printStackTrace()
                     call.respond(HttpStatusCode.BadGateway)
                 }
             }

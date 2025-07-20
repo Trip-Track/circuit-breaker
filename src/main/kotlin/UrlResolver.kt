@@ -28,8 +28,8 @@ object UrlResolver {
             val services = Json.decodeFromString<List<ConsulCatalogService>>(body)
             val service = services.firstOrNull() ?: return null
 
-            val address = service.serviceAddress.ifBlank { service.address }
-            val port = service.servicePort
+            val address = service.ServiceAddress.ifBlank { service.Address }
+            val port = service.ServicePort
 
             if (address.isNotBlank() && port != null){
                 logger.log.info("Discovered service: $name")
@@ -39,8 +39,8 @@ object UrlResolver {
                 null
             }
 
-        } catch (_: Exception) {
-            logger.log.error("Failed to discover service: $name")
+        } catch (e: Exception) {
+            logger.log.error("Failed to discover service: $name: ${e.message}")
             null
         } finally {
             client.close()
@@ -49,8 +49,8 @@ object UrlResolver {
 
     @Serializable
     private data class ConsulCatalogService(
-        val serviceAddress: String = "",
-        val address: String        = "",
-        val servicePort: Int?      = null,
+        val ServiceAddress: String = "",
+        val Address: String        = "",
+        val ServicePort: Int?      = null,
     )
 }
