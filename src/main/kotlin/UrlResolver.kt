@@ -7,9 +7,12 @@ import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import swa.circuit_breaker.Logger
 
 
 object UrlResolver {
+    val logger = Logger(this::class.simpleName!!)
+
     val client = HttpClient(Java) { expectSuccess = false }
 
     val consulAddr = System.getenv("CONSUL_HTTP_ADDR")
@@ -18,18 +21,26 @@ object UrlResolver {
     suspend fun discoverService(name: String): String? {
 
         return try {
-            val body: String = client.get("$consulAddr/v1/catalog/service/$name"){
+            val body: String = client.get("$consulAddr/v1/catalog/service/$name") {
                 timeout { requestTimeoutMillis = 1_000 }
             }.body()
 
             val services = Json.decodeFromString<List<ConsulCatalogService>>(body)
-            val service   = services.firstOrNull() ?: return null
+            val service = services.firstOrNull() ?: return null
 
-            val address   = service.ServiceAddress.ifBlank { service.Address }
-            val port      = service.ServicePort
+            val address = service.serviceAddress.ifBlank { service.address }
+            val port = service.servicePort
 
-            if (address.isNotBlank() && port != null) "http://$address:$port" else null
+            if (address.isNotBlank() && port != null){
+                logger.log.info("Discovered service: $name")
+                "http://$address:$port"
+
+            }else{
+                null
+            }
+
         } catch (_: Exception) {
+            logger.log.error("Failed to discover service: $name")
             null
         } finally {
             client.close()
@@ -38,8 +49,8 @@ object UrlResolver {
 
     @Serializable
     private data class ConsulCatalogService(
-        val ServiceAddress: String = "",
-        val Address: String        = "",
-        val ServicePort: Int?      = null,
+        val serviceAddress: String = "",
+        val address: String        = "",
+        val servicePort: Int?      = null,
     )
 }

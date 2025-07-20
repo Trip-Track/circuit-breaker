@@ -1,4 +1,4 @@
-rootProject.name = "WeatherService"
+rootProject.name = "circuit-breaker"
 
 
 include(":kotlin-common")
