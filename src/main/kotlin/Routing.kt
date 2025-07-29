@@ -8,9 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.path
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.utils.io.copyTo
 import io.ktor.utils.io.jvm.javaio.copyTo
-import swa.UrlResolver.discoverService
 import swa.circuit_breaker.CircuitBreaker
 import swa.circuit_breaker.CircuitBreakerReject
 
@@ -36,6 +34,7 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "Path temporarily unavailable")
                 } catch (ex: Exception) {
+                    log.error("Exception while routing request to ${call.request.path()}")
                     ex.printStackTrace()
                     call.respond(HttpStatusCode.BadGateway)
                 }
@@ -54,6 +53,7 @@ fun Application.configureRouting(
                 call.respond(HttpStatusCode.ServiceUnavailable,
                     "Map temporarily unavailable")
             } catch (ex: Exception) {
+                log.error("Exception while routing request to ${call.request.path()}")
                 ex.printStackTrace()
                 call.respond(HttpStatusCode.BadGateway)
             }
@@ -71,6 +71,7 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.ServiceUnavailable,
                         "City-info temporarily unavailable")
                 } catch (ex: Exception) {
+                    log.error("Exception while routing request to ${call.request.path()}")
                     ex.printStackTrace()
                     call.respond(HttpStatusCode.BadGateway)
                 }
