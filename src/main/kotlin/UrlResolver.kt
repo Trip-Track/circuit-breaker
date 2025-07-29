@@ -24,7 +24,6 @@ object UrlResolver {
 
         return try {
             val body: String = client.get("$consulAddr/v1/catalog/service/$name") {
-                println(url)
                 timeout { requestTimeoutMillis = 1_000 }
             }.body()
 
